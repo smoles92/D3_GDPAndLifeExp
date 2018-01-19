@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang = "en">
+    <head>
+        <meta charset="utf-8">
+        <title>Channelling	Hans</title>
+        <!--******** MAIN IMPORTS ************-->
+
+        <!-- Latest compiled and minified CSS -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+        <!-- jQuery library -->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+        <!-- Latest compiled JavaScript -->
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+        <script type="text/javascript" src="./d3/d3.v4.js" charset="utf-8"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    </head>
+
+    <body>
+        <h2>Channelling	Hans - GDP/Life Expectancy Change</h2>
+        <!-- Year Display -->
+        <h3 id = "year_header"></h3>
+
+        <!-- Stop and play buttons -->
+        <div class = "button-bar">
+            <div type="button" class ="btn btn-primary play_button">Play All</div>
+            <div type="button" class ="btn btn-danger stop_button">Stop</div>
+            <select id="countryDropdown"></select>
+        </div>
+
+        <script type="text/javascript">
+            /******** MAIN VISUALISATION DIMENSIONS ************/
+            // Define margins
+            var margin = {top: 40, right: 200, bottom: 25, left: 30};
+
+            // Width and height
+            var outer_width = 870;
+            var outer_height = 400;
+            var svg_width = outer_width - margin.left - margin.right;
+            var svg_height = outer_height - margin.top - margin.bottom;
+
+            /******** BAR 1: NUMBER OF COUNTRIES PER REGION DIMENSIONS ************/
+            // Define margins
+            var margin1 = {top: 40, right: 40, bottom: 25, left: 100};
+
+            // Width and height
+            var outer_width1 = 400;
+            var outer_height1 = 300;
+            var svg_width1 = outer_width1 - margin1.left - margin1.right;
+            var svg_height1 = outer_height1 - margin1.top - margin1.bottom;
+
+            /******** BAR 2: NUMBER OF COUNTRIES WITH EACH GOV. TYPE ************/
+            // Define margins
+            var margin2 = {top: 40, right: 40, bottom: 30, left: 290};
+
+            //Width and height
+            var outer_width2 = 600;
+            var outer_height2 = 300;
+            var svg_width2 = outer_width2 - margin2.left - margin2.right;
+            var svg_height2 = outer_height2 - margin2.top - margin2.bottom;
+            
+
+            // Display the year
+            var display_year = 1900;
+
+            // Defining a function that filters data by year
+            function yearFilter(value){
+                return (value.Year == display_year)
+            }
+
+//INCOMPLETE  // This commented code is part of the incompleted trace 
+//            var display_country = "";
+//
+//            function countryFilter(value){
+//                return (value.Country = display_trace)
+//            }
+
+            /******** MAIN VIS ************/
+            // Create SVG element as a group with the margins transform applied to it
+            var svg = d3.select("body")
+            .append("svg")
+            .attr("width", svg_width + margin.left + margin.right)
+            .attr("height", svg_height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+            .attr("class", "chart")
+            .attr("background", "blue");
+
+            var axes = svg.append("g");
+
+            //******** BAR 1 ************/
+            // Create SVG element as a group with the margins transform applied to it
+            var svg1 = d3.select("body")
+            .append("svg")
+            .attr("width", svg_width1 + margin1.left + margin1.right)
+            .attr("height", svg_height1 + margin1.top + margin1.bottom)
+            .append("g")
+            .attr("transform", "translate(" + margin1.left + "," + margin1.top + ")")
+            .attr("class", "chart");
+
+            var bar1 = svg1.append("g");
+
+            //******** BAR 2 ************/
+            //Create SVG element as a group with the margins transform applied to it
+            var svg2 = d3.select("body")
+            .append("svg")
+            .attr("width", svg_width2 + margin2.left + margin2.right)
+            .attr("height", svg_height2 + margin2.top + margin2.bottom)
+            .append("g")
+            .attr("transform", "translate(" + margin2.left + "," + margin2.top + ")")
+            .attr("class", "chart");
+
+            var bar2 = svg2.append("g");
+            
+
+            // Define main chart function
+            function generateVis(){
+
+                /******** MAIN VIS: FILTER AND SORT SELECTION ************/
+                // Filter the data to only include the current year
+                var filtered_dataset = dataset.filter(yearFilter);
+                console.log(filtered_dataset);
+
+                // Sorting the data so larger populations are in background, while smaller are in foreground
+                filtered_dataset.sort(function(i, j){
+                    return j.Population - i.Population
+                })
+
+                // Nesting the data by Country
+                var countries_dataset = d3.nest()
+                .key(function(d) {
+                    return d.Country;
+                })
+                .entries(dataset);
+
+                /******** MAIN VIS: TRACE SECTION/DROPDOWN POPULATING ************/                
+                // Selecting "select" tag by ID 
+                var country_dropdown = document.getElementById("countryDropdown");
+
+                // Create an array to hold unique Country values
+                var countries_array = [];
+
+                // Loop through the nested data, adding each Country to array
+                for (var i = 0; i < countries_dataset.length; i++) {
+                    countries_array.push(countries_dataset[i].key);
+                }
+
+                // Adding "Option" tags with each unique Country 
+                var option = "";
+                for (var i = 0; i < countries_array.length; i++) {
+                    option += '<option class="trace" value="' + countries_array[i] + '">' + countries_array[i] + '</option>';
+                }
+
+                // Using jQuery to append "Option" tags to "Select" tag
+                $('#countryDropdown').append(option);
+
+ //INCOMPLETE   /******** TRACE: FILTER BY COUNTRY ************/  
+                // Access countries from Array of countries and store in variable
+//                for (var i = 0; i < countries_array.length; i++){
+//                    display_country = countries_array[i];
+//                }
+//
+//                // Define a function that filters data by country
+//                function countryFilter(value){
+//                    return (value.Country == display_country);
+//                }
+//
+//                // Filter the data to only include the current country
+//                var filtered_country = dataset.filter(countryFilter);
+//                console.log(filtered_country);
+//END                
+                /******** BAR 1: NUMBER OF COUNTRIES PER REGION ************/
+                // Access key and values to populate top bar chart
+                var regionCount = d3.nest()
+                .key(function(d) {
+                    return d.Region;
+                })
+                .rollup(function(v) {
+                    return v.length;
+                })
+                .entries(filtered_dataset);
+
+                /******** BAR 2: NUMBER OF GOV. PER COUNTRY ************/
+                //Access key and values to populate bottom bar chart
+                var GovernmentCount = d3.nest()
+                .key(function(d) {
+                    return d.Government;
+                })
+                .rollup(function(v) {
+                    return v.length;
+                })
+                .entries(filtered_dataset);
+                
+
+                /******** MAIN VIS: SCALE AND AXIS SELECTION ************/
+                // Create a Log scale to scale GDP values to bubble sizes
+                var xScale = d3.scaleLog()
+                .domain([100, d3.max(dataset, function(d) { return +d.GDP;}) ])
+                .range([0, svg_width]);
+
+                // Create a scale object to take care of positioning bubbles along the horizontal axis
+                var yScale = d3.scaleLinear()
+                .domain([0, d3.max(dataset, function(d) { return +d.LifeExp;}) ])
+                .range([svg_height, 0]);
+
+                // Create an x-axis connected to the x scale
+                var xAxis = d3.axisBottom()
+                .scale(xScale)
+                .ticks(3)
+                .tickFormat(function(d) { return "$" + String(d); });
+
+                // Create an y-axis connected to the y scale
+                var yAxis = d3.axisLeft()
+                .scale(yScale)
+                .ticks(5);
+
+                // Call the x-axis
+                svg.append("g")
+                    .attr("class", "axis")
+                    .attr("transform", "translate(0," + svg_height + ")")
+                    .call(xAxis);
+
+                // Call the y axis
+                svg.append("g")
+                    .attr("class", "axis")
+                    .call(yAxis);
+
+                // Add an x-axis label.
+                svg.append("text")
+                    .attr("class", "x label")
+                    .attr("text-anchor", "end")
+                    .attr("x", svg_width)
+                    .attr("y", svg_height - 6)
+                    .text("GDP (dollars)");
+
+                // Add an y-axis label.
+                svg.append("text")
+                    .attr("class", "y label")
+                    .attr("text-anchor", "end")
+                    .attr("y", 6)
+                    .attr("dy", ".75em")
+                    .attr("transform", "rotate(-90)")
+                    .text("Life Expectancy (Years)");
+
+                /******** BAR 1: SCALE AND AXIS SELECTION ************/
+                // Create a scale to scale populations share values nicely for bar heights
+                var xScale1 = d3.scaleLinear()
+                .domain([0, 100 ])
+                .rangeRound([0, svg_width1]);
+
+                // Create a scale object to nicely take care of positioning bars along the horizontal axis
+                var yScale1 = d3.scaleBand()
+                .domain(dataset.map(function(d) { return d.Region; }))
+                .range([0, svg_height1], 0.1)
+                .paddingInner(0.1)
+                .paddingOuter(0.1);
+
+                // Create an x-axis connected to the x scale
+                var xAxis1 = d3.axisBottom()
+                .scale(xScale1)
+                .ticks(4);
+
+                //Define Y axis
+                var yAxis1 = d3.axisLeft()
+                .scale(yScale1);
+
+                // Call the x-axis
+                svg1.append("g")
+                    .attr("class", "axis")
+                    .attr("transform", "translate(0," + svg_height1 + ")")
+                    .call(xAxis1);
+
+                // Call the y axis
+                svg1.append("g")
+                    .attr("class", "axis")
+                    .call(yAxis1);
+
+                // Add an x-axis label.
+                svg1.append("text")
+                    .attr("class", "x label")
+                    .attr("text-anchor", "end")
+                    .attr("x", svg_width1)
+                    .attr("y", svg_height1 - 6)
+                    .text("Number of Countries");
+
+                // Add an y-axis label.
+                svg1.append("text")
+                    .attr("class", "y label")
+                    .attr("text-anchor", "end")
+                    .attr("y", -15)
+                    .attr("dy", ".75em")
+                    .text("Region");
+
+                /******** BAR 2: SCALE AND AXIS SELECTION ************/
+                // Create a scale to scale populations share values nicely for bar heights
+                var xScale2 = d3.scaleLinear()
+                .domain([0, 120])
+                .range([0, svg_width2]);
+
+                // Create a scale object to nicely take care of positioning bars along the horizontal axis
+                var yScale2 = d3.scaleBand()
+                .domain(dataset.map(function(d) { return d.Government; }))
+                .range([0, svg_height2], 0.1)
+                .paddingInner(0.1)
+                .paddingOuter(0.1);
+
+                // Create an x-axis connected to the x scale
+                var xAxis2 = d3.axisBottom()
+                .scale(xScale2)
+                .ticks(4);
+
+                //Define Y axis
+                var yAxis2 = d3.axisLeft()
+                .scale(yScale2);
+
+                // Call the x-axis
+                svg2.append("g")
+                    .attr("class", "axis")
+                    .attr("transform", "translate(0," + svg_height2 + ")")
+                    .call(xAxis2);
+
+                // Call the y axis
+                svg2.append("g")
+                    .attr("class", "axis")
+                    .call(yAxis2);
+
+                // Add an x-axis label.
+                svg2.append("text")
+                    .attr("class", "x label")
+                    .attr("text-anchor", "end")
+                    .attr("x", svg_width2)
+                    .attr("y", svg_height2 - 6)
+                    .text("Number of Countries");
+
+                // Add an y-axis label.
+                svg2.append("text")
+                    .attr("class", "y label")
+                    .attr("text-anchor", "end")
+                    .attr("y", -15)
+                    .attr("dy", ".75em")
+                    .text("Goverment");
+                
+                
+
+                /******** PERFORM DATA JOIN ************/
+                // Join for bubble/circle elements
+                var bubbles = axes.selectAll("circle")
+                .data(filtered_dataset, function key(d) {
+                    return d.Country;
+                })
+
+                // Join for the text elements
+                var text = axes.selectAll("text")
+                .data(filtered_dataset, function key(d) {
+                    return d.Country;
+                }) 
+
+//INCOMPLETE    // Join for the country elements (for trace)
+                // var trace = axes.selectAll("circle")
+                //.data(filtered_country);
+
+                // Join for first bar chart
+                var bars = bar1.selectAll("rect")
+                .data(regionCount);
+
+                // Join for second bar chart
+                var bars2 = bar2.selectAll("rect")
+                .data(GovernmentCount);
+                
+                /******** BUBBLES AND TEXT: HANDLE UPDATE SELECTION ************/
+                // Update the display of existing elements to match new data (Bubbles)
+                bubbles.transition()
+                    .duration(800)
+                    .ease(d3.easeLinear)
+                    .attr("cx", function(d) {
+                    return xScale(+d.GDP); // Update x-axis by GDP value
+                })
+                    .attr("cy", function(d) {
+                    return yScale(+d.LifeExp); // Update y-axis by Life Exp
+                })
+                    .attr("r", function(d) {
+                    return Math.sqrt(+d.Population/300000); // Proportionally reduce area of bubbles
+                })
+
+                    .select("title")
+                    .text(function(d) {  
+                    return "Country: " + d.Country + "\n" + "Region: " + d.Region + "\n" + "Life Expectancy: " + Math.round(d.LifeExp) + " (" +d.Year + ")" + "\n" + "Population: " + d.Population + "\n" + "GDP Per Capita: $" + d.GDP; //Content for infobox onMouseOver
+                });
+
+                // Update the display of existing elements to match new data (Text)
+                text.text(function(d) {
+                    return d.Country;
+                });
+
+
+                /******** BUBBLES & TEXT: HANDLE ENTER SELECTION ************/
+                bubbles
+                // Assign values to bubble dimensions based on Population, GDP, and LifeExp 
+                    .enter()
+                    .append("circle")
+                    .attr("cx", function(d) {
+                    return xScale(+d.GDP);
+                })
+                    .attr("cy", function(d) {
+                    return yScale(+d.LifeExp);
+                })
+                    .attr("r", function(d) {
+                    return Math.sqrt(+d.Population/300000);
+                })
+                // Colour each bubble based on Region
+                    .attr("stroke", "black")
+                    .attr('fill',function(d) {
+                    if(d.Region == "South America" || d.Region == "Central America" || d.Region == "North America") {
+                        return "Green";
+                    } else if(d.Region == "Europe") {
+                        return "Yellow";
+                    } else if(d.Region == "Africa") {
+                        return "Blue";
+                    } else {
+                        return "Pink";
+                    }
+                })
+
+
+                // Mouse over makes unselected elements transparent, highlights selected bubble
+                    .on("mouseover", function(d) {
+                    d3.select(this)
+                        .attr("stroke-width", "2")
+                    var transparent = this;
+                    d3.selectAll("circle").filter(function(d) {
+                        return (this !== transparent);
+                    })
+                        .transition()
+                        .attr("opacity","0.4");
+                })
+                // Mouse out returns all bubbles to full opacity
+                    .on("mouseout", function(d){
+                    d3.select(this)
+                        .attr("stroke-width", "1")
+                    var transparent = this;
+                    d3.selectAll("circle").filter(function(d) {
+                        return (this !== transparent);
+                    })
+                        .transition()
+                        .attr("opacity","1.0");
+                })
+                // Appends Tooltip/infobox that display statistical information on "Mouse Over"
+                    .append("title")
+                    .text(function(d){
+                    return "Country: " + d.Country + "\n" + "Region: " + d.Region + "\n" + "Life Expectancy: " + Math.round(d.LifeExp) + " (" +d.Year + ")" + "\n" + "Population: " + d.Population + "\n" + "GDP Per Capita: $" + d.GDP;
+                });
+
+
+                text
+                    .enter()
+                    .append("text")
+                    .text(function(d) {
+                    return d.Country;
+                })
+                    .attr("visibility", "hidden");
+
+                /******** BAR 1: HANDLE UPDATE SELECTION ************/
+                bars.transition()
+                    .duration(800)
+                    .ease(d3.easeElastic)
+                    .attr("y", function(d) {
+                    return yScale1(d.key);
+                })
+                    .attr("x",0)
+                    .attr("width", function(d) {
+                    return xScale1(+d.value)
+                })
+                    .attr('fill',function(d) {
+                    if(d.key == "South America" || d.key == "Central America" || d.key == "North America") {
+                        return "Green";
+                    } else if(d.key == "Europe") {
+                        return "Yellow";
+                    } else if(d.key == "Africa") {
+                        return "Blue";
+                    } else {
+                        return "Pink";
+                    }
+                });
+
+                /******** BAR 1: HANDLE ENTER SELECTION ************/
+                bars
+                    .enter()
+                    .append("rect")
+                    .attr("y", function(d) {
+                    return yScale1(d.key);
+                })
+                    .attr("x",0)
+                    .attr("width", function(d) {
+                    return xScale1(+d.value);
+                })
+                    .attr("height", function(d) {
+                    return yScale1.bandwidth();
+                })
+                    .attr('fill',function(d) {
+                    if(d.key == "South America" || d.key == "Central America" || d.key == "North America") {
+                        return "Green";
+                    } else if(d.key == "Europe") {
+                        return "Yellow";
+                    } else if(d.key == "Africa") {
+                        return "Blue";
+                    } else {
+                        return "Pink";
+                    }
+                })
+                // Appends Tooltip/infobox that display statistical information on "Mouse Over"
+                    .append("title")
+                    .text(function(d){
+                    return "Region: " + d.key + "\n" + "Number of Countries: " + d.value;
+                });
+
+                /******** BAR 2: HANDLE UPDATE SELECTION ************/
+                bars2.transition()
+                    .duration(800)
+                    .ease(d3.easeElastic)
+                    .attr("y", function(d) {
+                    return yScale2(d.key);
+                })
+                    .attr("x",0)
+                    .attr("width", function(d) {
+                    return xScale2(+d.value)
+                })
+                    .attr("height", yScale2.bandwidth())
+                    .style("fill", "Green");
+
+
+                /******** BAR 2: HANDLE ENTER SELECTION ************/
+                bars2
+                    .enter()
+                    .append("rect")
+                    .attr("y", function(d) {
+                    return yScale2(d.key);
+                })
+                    .attr("x",0)
+                    .attr("width", function(d) {
+                    return xScale2(+d.value);
+                })
+                    .attr("height", function(d) {
+                    return yScale2.bandwidth();
+                })
+                    .style("fill", "Blue")
+                    // Appends Tooltip/infobox that display statistical information on "Mouse Over"
+                    .append("title")
+                    .text(function(d){
+                    return "Type of Government: " + d.key + "\n" + "Number of Countries: " + d.value;
+                }); 
+
+//INCOMPLETE    // Trace
+                // Trace section is incomplete 
+
+                /******** HANDLE EXIT SELECTION ************/
+                // Remove bars that not longer have a matching data element
+                bubbles.exit().remove();
+                text.exit().remove();
+                bars.exit().remove();
+                bars2.exit().remove();
+
+                // Set the year label
+                d3.select("#year_header").text("Year: " + display_year)
+            }
+
+            // Load the file data.csv and generate a visualisation based on it
+            d3.csv("./Gapminder_All_Time.csv", function(error, data){
+
+                // handle any data loading errors
+                if(error){
+                    console.log("Something went wrong");
+                    console.log(error);
+                }else{
+                    console.log("Data Loaded");
+
+                    // Assign  the data object loaded to the global dataset variable
+                    dataset = data;
+
+                    // convert each population variable to numeric type
+                    dataset.forEach(function(d){ d['GDP'] = +d['GDP']; }); 
+                    dataset.forEach(function(d){ d['LifeExp'] = +d['LifeExp']; });
+                    dataset.forEach(function(d){ d['Population'] = +d['Population']; });
+
+                    // Generate the visualisation
+                    generateVis();
+
+                }
+            });
+
+
+
+// INCOMPLETE // Add an on-click event handler to each button that updates the display year
+//            d3.selectAll(".trace")
+//                .on("click", function(d) {
+//
+//
+//                // Update the display year
+//                display_trace = d3.select(this).text();
+//
+//                // Update the visualisation
+//                generateVis();
+//
+//                // If the user selectes a specifc year then stop looping if it is in action
+//                clearInterval(playInterval);
+//            });
+
+
+            // A global variable for the interval listener so that it can be stopped elsewhere
+            var playInterval;	
+
+
+            // Add an event listener to the play all button do that when it is clicked the visualisation iterates through the different years
+            d3.select(".play_button")
+                .on("click", function() {
+
+                // Set up the interval callback
+                playInterval = setInterval(function() {
+
+                    // Increment the display year
+                    display_year++;
+
+                    if(display_year == 1901 || display_year == 1911 || display_year == 1921 || display_year == 1931 || display_year == 1941){
+                        display_year = display_year + 9;
+                    }else if( display_year > 2016){
+                        display_year = 1900;                            
+                    }
+                    generateVis();
+                }, 800);
+            });
+
+            // Clicking "stop" stops all transitions
+            d3.select(".stop_button")
+                .on("click", function(){
+                clearInterval(playInterval);
+            });
+
+        </script>
+
+        <!-- Slider for animation -->
+        <div id="slidecontainer" style="float: left; padding-top: 0.5%; width: 50%; padding-left: 1%">
+            <input type="range" min="1900" max="2016" value="1900" class="slider" id="myRange">
+        </div> 
+
+        <script>
+            // Increasing year value with slider
+            var slider = document.getElementById("myRange");
+            var output = document.getElementById("year_header");
+
+            slider.oninput = function() {
+                display_year = parseInt(this.value);
+
+                generateVis();
+            }
+        </script> 
+
+    </body>	 
+</html>
