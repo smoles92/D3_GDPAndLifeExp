@@ -1,4 +1,12 @@
 # D3_GDPAndLifeExp
+
+Project Technical Considerations:
+* *HTML/CSS (Bootstrap)*
+* *JavaScript*
+* *d3.js*
+* *jQuery*
+* *SVG elements* 
+
 The purpose of this project is to recreate the GapMinder World visualisation	using	d3.js
 The project incorporates:
 * A	bubble plot representing the countries of the world
